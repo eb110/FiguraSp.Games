@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FiguraSp.Games.Model\FiguraSp.Games.Model.csproj" />
+  </ItemGroup>
+
 </Project>

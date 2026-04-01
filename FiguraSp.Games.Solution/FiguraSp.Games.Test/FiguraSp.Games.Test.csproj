@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FiguraSp.Games.Api\FiguraSp.Games.Api.csproj" />
+    <ProjectReference Include="..\FiguraSp.Games.Model\FiguraSp.Games.Model.csproj" />
+    <ProjectReference Include="..\FiguraSp.Games.Service\FiguraSp.Games.Service.csproj" />
+  </ItemGroup>
+
 </Project>

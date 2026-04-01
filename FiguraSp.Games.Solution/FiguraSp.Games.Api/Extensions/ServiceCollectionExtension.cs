@@ -2,7 +2,7 @@
 using FiguraSp.Games.Service.Services;
 using FiguraSp.SharedLibrary.DependencyInjection;
 
-namespace FiguraSp.Teams.Api.Extensions
+namespace FiguraSp.Games.Api.Extensions
 {
     public static class ServiceCollectionExtension
     {

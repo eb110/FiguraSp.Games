@@ -1,4 +1,4 @@
-using FiguraSp.Teams.Api.Extensions;
+using FiguraSp.Games.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -29,6 +29,14 @@ namespace FiguraSp.Games.Service.Services
             return new() { Success = true, Year = year };
         }
 
+        public async Task<List<PicklistGameLevelResponseDto>> GetLevels()
+        {
+            IQueryable<PicklistGameLevel> query = context.PicklistGameLevel.OrderBy(x => x.GameLevel).AsQueryable().AsNoTracking();
+            var picklist = await context.GetEntitiesToListAsync(query);
+            List<PicklistGameLevelResponseDto> result = [.. picklist.Select(x => x.ToPicklistResponseDto())];
+            return result;
+        }
+
         public async Task<SeasonResponseDto> GetSeasonById(Guid id)
         {
             IQueryable<Season> query = context.Seasons.Where(s => s.Id.Equals(id)).AsQueryable();
@@ -63,6 +71,7 @@ namespace FiguraSp.Games.Service.Services
     public interface IGameService
     {
         public Task<List<SeasonResponseDto>> GetSeasons();
+        public Task<List<PicklistGameLevelResponseDto>> GetLevels();
         public Task<SeasonResponseDto> AddSeason(string year);
         public Task<SeasonResponseDto> GetSeasonByYear(string year);
         public Task<SeasonResponseDto> GetSeasonById(Guid id);

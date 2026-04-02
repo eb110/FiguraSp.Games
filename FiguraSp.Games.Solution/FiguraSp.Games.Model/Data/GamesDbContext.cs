@@ -6,6 +6,8 @@ namespace FiguraSp.Games.Model.Data
     public partial class GamesDbContext(DbContextOptions<GamesDbContext> options) : DbContext(options)
     {
         public virtual DbSet<Season> Seasons { get; set; }
+
+        public virtual DbSet<PicklistGameLevel> PicklistGameLevel { get; set; }
         public virtual async Task<T> GetFirstOrDefaultAsync<T>(IQueryable<T> query)
         {
             var entity = await query.FirstOrDefaultAsync();

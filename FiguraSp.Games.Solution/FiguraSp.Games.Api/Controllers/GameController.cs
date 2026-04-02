@@ -17,6 +17,14 @@ namespace FiguraSp.Games.Api.Controllers
         }
 
         [HttpGet]
+        [Route("Levels")]
+        public async Task<ActionResult<List<PicklistGameLevelResponseDto>>> GetLevels()
+        {
+            var response = await gameService.GetLevels();
+            return Ok(response);
+        }
+
+        [HttpGet]
         [Route("Season")]
         public async Task<ActionResult<SeasonResponseDto>> GetSeasonById(Guid id)
         {

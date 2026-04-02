@@ -11,6 +11,7 @@ namespace FiguraSp.Games.Model.Extensions
             {
                 Id = season.Id,
                 Year = season.Year,
+                Success = true
             };
 
             return response;

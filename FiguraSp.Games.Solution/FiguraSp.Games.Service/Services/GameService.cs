@@ -75,14 +75,23 @@ namespace FiguraSp.Games.Service.Services
                 {
                     if(i != j)
                     {
-                        games.Add(new() 
-                        { 
-                            TeamHomeId = gamesRequest.TeamIds[i], 
-                            TeamAwayId = gamesRequest.TeamIds[j],
-                            SeasonId = gamesRequest.SeasonId,
-                            LevelId = gamesRequest.GameLevelId,
-                            Inserted = false
-                        });
+                        IQueryable<Game> gameQuery = context.Game
+                            .Where(x => x.SeasonId.Equals(gamesRequest.SeasonId) &&
+                            x.TeamHomeId.Equals(gamesRequest.TeamIds[i]) && x.TeamAwayId.Equals(gamesRequest.TeamIds[j]) &&
+                            x.LevelId.Equals(gamesRequest.GameLevelId)).AsQueryable().AsNoTracking();
+
+                        var gameCheck = await context.GetFirstOrDefaultAsync(gameQuery);
+                        if(gameCheck is null)
+                        {
+                            games.Add(new()
+                            {
+                                TeamHomeId = gamesRequest.TeamIds[i],
+                                TeamAwayId = gamesRequest.TeamIds[j],
+                                SeasonId = gamesRequest.SeasonId,
+                                LevelId = gamesRequest.GameLevelId,
+                                Inserted = false
+                            });
+                        }         
                     }
                 }
             }
@@ -129,6 +138,21 @@ namespace FiguraSp.Games.Service.Services
             List<SeasonResponseDto> result = [.. seasons.Select(x => x.ToSeasonResponseDto())];
             return result;
         }
+
+        public async Task<List<GamesResponseDto>> GetGamesBySeasonId(Guid id)
+        {
+            IQueryable<Game> query = context.Game.Where(x => x.SeasonId == id).AsQueryable().AsNoTracking();
+            try
+            {
+                var games = await context.GetEntitiesToListAsync(query);
+                List<GamesResponseDto> result = [..games.Select(x => x.ToGamesResponseDto())];
+                return result;
+            }
+            catch (Exception ex) 
+            {
+                throw new Exception($"can't fetch games: {ex.Message}");
+            }
+        }
     }
 
     public interface IGameService
@@ -138,7 +162,7 @@ namespace FiguraSp.Games.Service.Services
         public Task<SeasonResponseDto> AddSeason(string year);
         public Task<SeasonResponseDto> GetSeasonByYear(string year);
         public Task<SeasonResponseDto> GetSeasonById(Guid id);
-
         public Task<DefaultResponse> AddGamesList(GamesRequestDto games);
+        public Task<List<GamesResponseDto>> GetGamesBySeasonId(Guid id);
     }
 }

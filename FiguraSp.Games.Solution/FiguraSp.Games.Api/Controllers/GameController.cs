@@ -52,6 +52,14 @@ namespace FiguraSp.Games.Api.Controllers
             return BadRequest(response);
         }
 
+        [HttpGet]
+        [Route("SeasonGames")]
+        public async Task<ActionResult<List<GamesResponseDto>>> GetSeasonGames(Guid seasonId)
+        {
+            var response = await gameService.GetGamesBySeasonId(seasonId);
+            return Ok(response);
+        }
+
         [HttpPost]
         [Route("Season")]
         public async Task<ActionResult<SeasonResponseDto>> CreateSeason(string year)

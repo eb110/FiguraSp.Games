@@ -1,12 +1,16 @@
 ﻿using FiguraSp.Games.Model.Data;
 using FiguraSp.Games.Model.Entity;
 using FiguraSp.Games.Model.Extensions;
+using FiguraSp.Games.Model.Requests;
 using FiguraSp.Games.Model.Responses;
+using FiguraSp.SharedLibrary.Responses;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace FiguraSp.Games.Service.Services
 {
-    public class GameService(GamesDbContext context) : IGameService
+    public class GameService(GamesDbContext context, IHttpClientFactory httpClientFactory) : IGameService
     {
         public async Task<SeasonResponseDto> AddSeason(string year)
         {
@@ -36,6 +40,65 @@ namespace FiguraSp.Games.Service.Services
             List<PicklistGameLevelResponseDto> result = [.. picklist.Select(x => x.ToPicklistResponseDto())];
             return result;
         }
+
+        public async Task<DefaultResponse> AddGamesList(GamesRequestDto gamesRequest)
+        {
+            var client = httpClientFactory.CreateClient("figuraHttp");
+            var payload = JsonConvert.SerializeObject(gamesRequest.TeamIds);
+            var content = new StringContent(payload, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync("api/team/CheckTeams", content);
+            var responseString = await response.Content.ReadAsStringAsync();
+            var validateTeams = JsonConvert.DeserializeObject<DefaultResponse>(responseString);
+            if(!validateTeams!.Success)
+            {
+                return validateTeams;
+            }
+
+            var validateSeason = await GetSeasonById(gamesRequest.SeasonId);
+            if (!validateSeason.Success)
+            {
+                return validateTeams;
+            }
+
+            IQueryable<PicklistGameLevel> query = context.PicklistGameLevel.Where(x => x.Id.Equals(gamesRequest.GameLevelId)).AsQueryable();
+            var validateLevel = await context.GetFirstOrDefaultAsync(query);
+            if (validateLevel == null)
+            {
+                return new() { Errors = ["invalid game level"] };
+            }
+
+            List<Game> games = [];
+
+            for(int i = 0; i < gamesRequest.TeamIds.Count; i++)
+            {
+                for(int j = 0; j < gamesRequest.TeamIds.Count; j++)
+                {
+                    if(i != j)
+                    {
+                        games.Add(new() 
+                        { 
+                            TeamHomeId = gamesRequest.TeamIds[i], 
+                            TeamAwayId = gamesRequest.TeamIds[j],
+                            SeasonId = gamesRequest.SeasonId,
+                            LevelId = gamesRequest.GameLevelId,
+                            Inserted = false
+                        });
+                    }
+                }
+            }
+
+            try
+            {
+                context.AddRange(games);
+                await context.SaveChangesAsync();
+            }
+            catch (Exception ex) 
+            {
+                return new() { Errors = [ex.Message] };            
+            }
+
+            return new() { Success = true };
+        }   
 
         public async Task<SeasonResponseDto> GetSeasonById(Guid id)
         {
@@ -75,5 +138,7 @@ namespace FiguraSp.Games.Service.Services
         public Task<SeasonResponseDto> AddSeason(string year);
         public Task<SeasonResponseDto> GetSeasonByYear(string year);
         public Task<SeasonResponseDto> GetSeasonById(Guid id);
+
+        public Task<DefaultResponse> AddGamesList(GamesRequestDto games);
     }
 }

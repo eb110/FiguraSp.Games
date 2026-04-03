@@ -4,6 +4,7 @@ using FiguraSp.Games.Model.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FiguraSp.Games.Model.Migrations
 {
     [DbContext(typeof(GamesDbContext))]
-    partial class GamesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260402135502_gameModel")]
+    partial class gameModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,12 +31,6 @@ namespace FiguraSp.Games.Model.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("Inserted")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("LevelId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uniqueidentifier");
 
@@ -44,8 +41,6 @@ namespace FiguraSp.Games.Model.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LevelId");
 
                     b.HasIndex("SeasonId");
 
@@ -84,19 +79,11 @@ namespace FiguraSp.Games.Model.Migrations
 
             modelBuilder.Entity("FiguraSp.Games.Model.Entity.Game", b =>
                 {
-                    b.HasOne("FiguraSp.Games.Model.Entity.PicklistGameLevel", "Level")
-                        .WithMany()
-                        .HasForeignKey("LevelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FiguraSp.Games.Model.Entity.Season", "Season")
                         .WithMany("Games")
                         .HasForeignKey("SeasonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Level");
 
                     b.Navigation("Season");
                 });

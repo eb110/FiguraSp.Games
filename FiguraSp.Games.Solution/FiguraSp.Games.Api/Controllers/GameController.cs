@@ -1,5 +1,7 @@
-﻿using FiguraSp.Games.Model.Responses;
+﻿using FiguraSp.Games.Model.Requests;
+using FiguraSp.Games.Model.Responses;
 using FiguraSp.Games.Service.Services;
+using FiguraSp.SharedLibrary.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FiguraSp.Games.Api.Controllers
@@ -59,6 +61,20 @@ namespace FiguraSp.Games.Api.Controllers
             if(response.Success)
             {
                 return CreatedAtAction("GetSeasonByYear", new { year }, response);
+            }
+
+            return BadRequest(response);
+        }
+
+        [HttpPost]
+        [Route("Games")]
+        public async Task<ActionResult<DefaultResponse>> CreateGames([FromBody] GamesRequestDto gamesRequest)
+        {
+            var response = await gameService.AddGamesList(gamesRequest);
+
+            if (response.Success)
+            {
+                return Ok(response);
             }
 
             return BadRequest(response);

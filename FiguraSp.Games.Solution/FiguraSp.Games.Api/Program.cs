@@ -8,6 +8,11 @@ builder.Services.AddSharedDbConnection(builder.Configuration);
 builder.Services.AddCustomServices();
 builder.Services.AddSharedJwtScheme(builder.Configuration);
 
+builder.Services.AddHttpClient("figuraHttp", (serviceProvider, HttpClient) =>
+{
+    HttpClient.BaseAddress = new Uri("http://localhost:5000");
+});
+
 
 //##############################################################MIDDLEWARE###############
 

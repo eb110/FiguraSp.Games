@@ -15,6 +15,7 @@ namespace FiguraSp.Games.Model.Extensions
                 SeasonId = game.SeasonId,
                 LevelId = game.LevelId,
                 Inserted = game.Inserted,
+                GameDate = game.GameDate,
                 Success = true
             };
 

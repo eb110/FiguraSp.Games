@@ -87,5 +87,13 @@ namespace FiguraSp.Games.Api.Controllers
 
             return BadRequest(response);
         }
+
+        [HttpGet]
+        public async Task<ActionResult<GamesResponseDto>> GetGame(Guid id)
+        {
+            var response = await gameService.GetGameById(id);
+
+            return response;
+        }
     }
 }

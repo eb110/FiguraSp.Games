@@ -89,6 +89,7 @@ namespace FiguraSp.Games.Service.Services
                                 TeamAwayId = gamesRequest.TeamIds[j],
                                 SeasonId = gamesRequest.SeasonId,
                                 LevelId = gamesRequest.GameLevelId,
+                                GameDate = DateOnly.Parse($"{validateSeason.Year}-01-01"),
                                 Inserted = false
                             });
                         }         
@@ -153,6 +154,20 @@ namespace FiguraSp.Games.Service.Services
                 throw new Exception($"can't fetch games: {ex.Message}");
             }
         }
+
+        public async Task<GamesResponseDto> GetGameById(Guid id)
+        {
+            IQueryable<Game> query = context.Game.Where(x => x.Id.Equals(id)).AsQueryable().AsNoTracking();
+
+            Game result = await context.GetFirstOrDefaultAsync(query);
+
+            if(result is null)
+            {
+                return new() {Errors = ["game does not exist"] };
+            }
+
+            return result.ToGamesResponseDto();
+        }
     }
 
     public interface IGameService
@@ -164,5 +179,6 @@ namespace FiguraSp.Games.Service.Services
         public Task<SeasonResponseDto> GetSeasonById(Guid id);
         public Task<DefaultResponse> AddGamesList(GamesRequestDto games);
         public Task<List<GamesResponseDto>> GetGamesBySeasonId(Guid id);
+        public Task<GamesResponseDto> GetGameById(Guid id);
     }
 }

@@ -10,5 +10,6 @@ namespace FiguraSp.Games.Model.Responses
         public Guid? SeasonId { get; set; }
         public Guid? LevelId { get; set; }
         public bool? Inserted { get; set; }
+        public DateOnly? GameDate { get; set; }
     }
 }

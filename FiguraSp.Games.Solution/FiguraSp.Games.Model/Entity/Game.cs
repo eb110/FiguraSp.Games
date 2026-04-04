@@ -16,5 +16,6 @@ namespace FiguraSp.Games.Model.Entity
         public required Guid LevelId { get; set; }
         public PicklistGameLevel Level { get; set; } = null!;
         public required bool Inserted { get; set; } = false; 
+        public required DateOnly GameDate { get; set; }
     }
 }

@@ -17,5 +17,6 @@ namespace FiguraSp.Games.Model.Entity
         public PicklistGameLevel Level { get; set; } = null!;
         public required bool Inserted { get; set; } = false; 
         public required DateOnly GameDate { get; set; }
+        public List<Event> Events { get; set; } = [];
     }
 }

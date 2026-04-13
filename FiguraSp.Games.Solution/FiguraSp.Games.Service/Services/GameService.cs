@@ -3,6 +3,7 @@ using FiguraSp.Games.Model.Entity;
 using FiguraSp.Games.Model.Extensions;
 using FiguraSp.Games.Model.Requests;
 using FiguraSp.Games.Model.Responses;
+using FiguraSp.Games.Model.Views;
 using FiguraSp.SharedLibrary.Responses;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -15,7 +16,7 @@ namespace FiguraSp.Games.Service.Services
         public async Task<SeasonResponseDto> AddSeason(string year)
         {
             var seasonExist = await GetSeasonByYear(year);
-            if(seasonExist.Success)
+            if (seasonExist.Success)
             {
                 return new() { Errors = [$"Season of {year} already exist"] };
             }
@@ -41,6 +42,7 @@ namespace FiguraSp.Games.Service.Services
             return result;
         }
 
+        //frontend checkbox list of teams for current season
         public async Task<DefaultResponse> AddGamesList(GamesRequestDto gamesRequest)
         {
             var client = httpClientFactory.CreateClient("figuraHttp");
@@ -49,7 +51,7 @@ namespace FiguraSp.Games.Service.Services
             var response = await client.PostAsync("api/team/CheckTeams", content);
             var responseString = await response.Content.ReadAsStringAsync();
             var validateTeams = JsonConvert.DeserializeObject<DefaultResponse>(responseString);
-            if(!validateTeams!.Success)
+            if (!validateTeams!.Success)
             {
                 return validateTeams;
             }
@@ -69,11 +71,11 @@ namespace FiguraSp.Games.Service.Services
 
             List<Game> games = [];
 
-            for(int i = 0; i < gamesRequest.TeamIds.Count; i++)
+            for (int i = 0; i < gamesRequest.TeamIds.Count; i++)
             {
-                for(int j = 0; j < gamesRequest.TeamIds.Count; j++)
+                for (int j = 0; j < gamesRequest.TeamIds.Count; j++)
                 {
-                    if(i != j)
+                    if (i != j)
                     {
                         IQueryable<Game> gameQuery = context.Game
                             .Where(x => x.SeasonId.Equals(gamesRequest.SeasonId) &&
@@ -81,7 +83,7 @@ namespace FiguraSp.Games.Service.Services
                             x.LevelId.Equals(gamesRequest.GameLevelId)).AsQueryable().AsNoTracking();
 
                         var gameCheck = await context.GetFirstOrDefaultAsync(gameQuery);
-                        if(gameCheck is null)
+                        if (gameCheck is null)
                         {
                             games.Add(new()
                             {
@@ -92,7 +94,7 @@ namespace FiguraSp.Games.Service.Services
                                 GameDate = DateOnly.Parse($"{validateSeason.Year}-01-01"),
                                 Inserted = false
                             });
-                        }         
+                        }
                     }
                 }
             }
@@ -102,13 +104,13 @@ namespace FiguraSp.Games.Service.Services
                 context.AddRange(games);
                 await context.SaveChangesAsync();
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                return new() { Errors = [ex.Message] };            
+                return new() { Errors = [ex.Message] };
             }
 
             return new() { Success = true };
-        }   
+        }
 
         public async Task<SeasonResponseDto> GetSeasonById(Guid id)
         {
@@ -129,7 +131,7 @@ namespace FiguraSp.Games.Service.Services
             {
                 return new() { Errors = ["Season not found"] };
             }
-            return new() { Success = true, Id = season.Id, Year = season.Year};
+            return new() { Success = true, Id = season.Id, Year = season.Year };
         }
 
         public async Task<List<SeasonResponseDto>> GetSeasons()
@@ -146,10 +148,10 @@ namespace FiguraSp.Games.Service.Services
             try
             {
                 var games = await context.GetEntitiesToListAsync(query);
-                List<GamesResponseDto> result = [..games.Select(x => x.ToGamesResponseDto())];
+                List<GamesResponseDto> result = [.. games.Select(x => x.ToGamesResponseDto())];
                 return result;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 throw new Exception($"can't fetch games: {ex.Message}");
             }
@@ -161,12 +163,154 @@ namespace FiguraSp.Games.Service.Services
 
             Game result = await context.GetFirstOrDefaultAsync(query);
 
-            if(result is null)
+            if (result is null)
             {
-                return new() {Errors = ["game does not exist"] };
+                return new() { Errors = ["game does not exist"] };
             }
 
             return result.ToGamesResponseDto();
+        }
+
+        public async Task<DefaultResponse> AddRiderEvents(RiderEventsRequestDto eventRequest)
+        {
+            List<string> allowedIndividualResults = ["0", "1", "2", "3"];
+
+            IQueryable<Game> gameQuery = context.Game.Where(x => x.Id.Equals(eventRequest.GameId)).AsQueryable().AsNoTracking();
+            Game game = await context.GetFirstOrDefaultAsync(gameQuery);
+            if (game is null || game.Inserted)
+            {
+                return new DefaultResponse() { Errors = ["Bad game id"] };
+            }
+
+            if (!new List<string>() { "Home", "Away" }.Contains(eventRequest.HomeAway))
+            {
+                return new DefaultResponse() { Errors = ["Bad >HOME AWAY< value"] };
+            }
+
+            if (eventRequest.HomeAway.Equals("Home") && (eventRequest.GameRiderNr < 9 || eventRequest.GameRiderNr > 16))
+            {
+                return new DefaultResponse() { Errors = ["Bad >HOME< starting number"] };
+            }
+
+            if (eventRequest.HomeAway.Equals("Away") && (eventRequest.GameRiderNr < 1 || eventRequest.GameRiderNr > 8))
+            {
+                return new DefaultResponse() { Errors = ["Bad >AWAY< starting number"] };
+            }
+
+            List<string> individualResults = [];
+
+
+            try
+            {
+                individualResults = [..eventRequest.GameRiderResult.Split(',')];
+                if (individualResults.Any(x => !allowedIndividualResults.Contains(x)))
+                {
+                    return new DefaultResponse() { Errors = ["Bad result"] };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse() { Errors = [ex.Message] };
+            }
+
+            (int, int)[] _1 = [(1, 1), (7, 1), (11, 2), (13, 2)];
+            (int, int)[] _2 = [(1, 3), (4, 2), (7, 3), (11, 4)];
+            (int, int)[] _3 = [(2, 2), (6, 2), (10, 1), (12, 1)];
+            (int, int)[] _4 = [(2, 4), (6, 4), (8, 1), (10, 3)];
+            (int, int)[] _5 = [(3, 1), (5, 1), (9, 2), (13, 4)];
+            (int, int)[] _6 = [(3, 3), (5, 3), (9, 4), (12, 3)];
+            (int, int)[] _7 = [(4, 4), (8, 3)];
+            (int, int)[] _8 = [];
+            (int, int)[] _9 = [(1, 2), (6, 1), (9, 1), (12, 2)];
+            (int, int)[] _10 = [(1, 4), (4, 1), (6, 3), (9, 3)];
+            (int, int)[] _11 = [(2, 1), (5, 2), (11, 1), (13, 1)];
+            (int, int)[] _12 = [(2, 3), (5, 4), (8, 2), (11, 3)];
+            (int, int)[] _13 = [(3, 2), (7, 2), (10, 2), (12, 4)];
+            (int, int)[] _14 = [(3, 4), (7, 4), (10, 4), (13, 3)];
+            (int, int)[] _15 = [(4, 3), (8, 4)];
+            (int, int)[] _16 = [];
+
+            List<(int, int)[]> season13Heats = [_1, _2, _3, _4, _5, _6, _7, _9, _10, _11, _12, _13, _14, _15, _16];
+
+            List<Event> events = [];
+            for (int i = 0; i < individualResults.Count; i++)
+            {
+                if (i < season13Heats[eventRequest.GameRiderNr - 1].Length)
+                {
+                    Event riderEvent = new()
+                    {
+                        GameId = eventRequest.GameId,
+                        RiderId = eventRequest.RiderId,
+                        RiderGameNumber = eventRequest.GameRiderNr,
+                        RiderHeatNumber = season13Heats[eventRequest.GameRiderNr - 1][i].Item1,
+                        RiderRowNumber = season13Heats[eventRequest.GameRiderNr - 1][i].Item2,
+                        EventResult = individualResults[i],
+                        HomeAway = eventRequest.HomeAway,
+                    };
+                    events.Add(riderEvent);
+                }
+            }
+
+            
+            try
+            {
+                context.AddRange(events);
+                await context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse() { Errors = [ex.Message] };
+            }
+
+            return new DefaultResponse() { Success = true };
+        }
+
+        public async Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway)
+        {
+            var game = await GetGameById(gameId);
+            if(!game.Success)
+            {
+                throw new Exception("wrong game id");
+            }
+
+            List<Event> events = [];
+            try
+            {
+                IQueryable<Event> query = context.Events.Where(x => x.GameId == gameId && x.HomeAway.Equals(homeAway)).AsQueryable().AsNoTracking();
+                events = await context.GetEntitiesToListAsync(query);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+            List<EventResponseDto> response = [.. events.Select(x => x.ToEventResponseDto())];
+
+            return response;
+        }
+
+        public async Task<GameRiderEventsResponseDto> GameRiderEvents(Guid gameId, string homeAway)
+        {
+            var game = await GetGameById(gameId);
+            if (!game.Success)
+            {
+                throw new Exception("wrong game id");
+            }
+
+            List<VRiderEvent> gameRiderEvents = [];
+            try
+            {
+                IQueryable<VRiderEvent> query = context.V_Rider_Events.Where(x => x.GameId == gameId && x.HomeAway.Equals(homeAway)).OrderBy(x => x.RiderGameNumber).AsQueryable().AsNoTracking();
+                gameRiderEvents = await context.GetEntitiesToListAsync(query);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+            GameRiderEventsResponseDto response = new() { GameRiderEvents = gameRiderEvents, Success = true }; 
+
+            return response;
         }
     }
 
@@ -180,5 +324,8 @@ namespace FiguraSp.Games.Service.Services
         public Task<DefaultResponse> AddGamesList(GamesRequestDto games);
         public Task<List<GamesResponseDto>> GetGamesBySeasonId(Guid id);
         public Task<GamesResponseDto> GetGameById(Guid id);
+        public Task<DefaultResponse> AddRiderEvents(RiderEventsRequestDto eventRequest);
+        public Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway);
+        public Task<GameRiderEventsResponseDto> GameRiderEvents(Guid gameId, string homeAway);
     }
 }

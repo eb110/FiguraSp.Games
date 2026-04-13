@@ -39,6 +39,33 @@ namespace FiguraSp.Games.Api.Controllers
             return BadRequest(response);
         }
 
+        [HttpPost]
+        [Route("RiderEvents")]
+        public async Task<ActionResult<DefaultResponse>> AddRiderEvents(RiderEventsRequestDto riderEventsRequest)
+        {
+            var response = await gameService.AddRiderEvents(riderEventsRequest);
+
+            return response;
+        }
+
+        [HttpGet]
+        [Route("GameEvents")]
+        public async Task<ActionResult<List<EventResponseDto>>> GameEvents(Guid gameId, string homeAway)
+        {
+            var response = await gameService.GameEvents(gameId, homeAway);
+
+            return Ok(response);
+        }
+
+        [HttpGet]
+        [Route("GameRiderEvents")]
+        public async Task<ActionResult<List<GameRiderEventsResponseDto>>> GameRiderEvents(Guid gameId, string homeAway)
+        {
+            var response = await gameService.GameRiderEvents(gameId, homeAway);
+
+            return Ok(response);
+        }
+
         [HttpGet]
         [Route("SeasonByYear")]
         public async Task<ActionResult<SeasonResponseDto>> GetSeasonByYear(string year)

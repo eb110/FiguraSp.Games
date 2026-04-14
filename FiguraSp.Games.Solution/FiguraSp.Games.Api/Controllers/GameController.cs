@@ -66,6 +66,18 @@ namespace FiguraSp.Games.Api.Controllers
             return Ok(response);
         }
 
+        [HttpDelete]
+        [Route("RemoveGameRiderEvents")]
+        public async Task<ActionResult> RemoveGameRiderEvents(Guid gameId, Guid riderId)
+        {
+            var response = await gameService.DeleteGameRiderEvents(gameId, riderId);
+            if(!response.Success)
+            {
+                return BadRequest();
+            }
+            return NoContent();
+        }
+
         [HttpGet]
         [Route("SeasonByYear")]
         public async Task<ActionResult<SeasonResponseDto>> GetSeasonByYear(string year)

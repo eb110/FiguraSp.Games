@@ -312,6 +312,30 @@ namespace FiguraSp.Games.Service.Services
 
             return response;
         }
+
+        public async Task<DefaultResponse> DeleteGameRiderEvents(Guid gameId, Guid riderId)
+        {
+            var game = await GetGameById(gameId);
+            if (!game.Success)
+            {
+                throw new Exception("wrong game id");
+            }
+
+            try
+            {
+                IQueryable<Event> query = context.Events.Where(x => x.GameId == gameId && x.RiderId == riderId).AsQueryable().AsNoTracking();
+                context.Events.RemoveRange(query);
+
+                await context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse() { Errors = [ex.Message] };
+            }
+   
+
+            return new DefaultResponse() { Success = true };
+        }
     }
 
     public interface IGameService
@@ -327,5 +351,6 @@ namespace FiguraSp.Games.Service.Services
         public Task<DefaultResponse> AddRiderEvents(RiderEventsRequestDto eventRequest);
         public Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway);
         public Task<GameRiderEventsResponseDto> GameRiderEvents(Guid gameId, string homeAway);
+        public Task<DefaultResponse> DeleteGameRiderEvents(Guid gameId, Guid riderId);
     }
 }

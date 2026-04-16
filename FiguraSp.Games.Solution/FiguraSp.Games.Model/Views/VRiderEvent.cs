@@ -24,8 +24,4 @@ public partial class VRiderEvent
     public string? Heats { get; set; }
 
     public string? Rows { get; set; }
-
-    public int? HeatsCount { get; set; }
-
-    public int? Points { get; set; }
 }

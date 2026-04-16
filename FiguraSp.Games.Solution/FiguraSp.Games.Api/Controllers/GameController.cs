@@ -66,6 +66,15 @@ namespace FiguraSp.Games.Api.Controllers
             return Ok(response);
         }
 
+        [HttpGet]
+        [Route("GameEventsWithRider")]
+        public async Task<ActionResult<List<EventWithRiderResponseDto>>> EventWithRiders(Guid gameId)
+        {
+            var response = await gameService.GameEventsWithRider(gameId);
+
+            return Ok(response);
+        }
+
         [HttpDelete]
         [Route("RemoveGameRiderEvents")]
         public async Task<ActionResult> RemoveGameRiderEvents(Guid gameId, Guid riderId)

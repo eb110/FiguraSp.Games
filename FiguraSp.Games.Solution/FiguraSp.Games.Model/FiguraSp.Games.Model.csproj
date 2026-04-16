@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\FiguraSp.Riders\FiguraSp.Riders.Solution\FiguraSp.Riders.Model\FiguraSp.Riders.Model.csproj" />
     <ProjectReference Include="..\..\..\FiguraSp.SharedLibrary\FiguraSp.SharedLibrary.Solution\FiguraSp.SharedLibrary\FiguraSp.SharedLibrary.csproj" />
   </ItemGroup>
 

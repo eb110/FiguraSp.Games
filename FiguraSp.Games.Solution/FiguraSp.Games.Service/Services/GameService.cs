@@ -4,6 +4,7 @@ using FiguraSp.Games.Model.Extensions;
 using FiguraSp.Games.Model.Requests;
 using FiguraSp.Games.Model.Responses;
 using FiguraSp.Games.Model.Views;
+using FiguraSp.Riders.Model.DTOs.Responses;
 using FiguraSp.SharedLibrary.Responses;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -173,7 +174,7 @@ namespace FiguraSp.Games.Service.Services
 
         public async Task<DefaultResponse> AddRiderEvents(RiderEventsRequestDto eventRequest)
         {
-            List<string> allowedIndividualResults = ["0", "1", "2", "3"];
+            List<string> allowedIndividualResults = ["0", "1", "2", "3", "-", "u", "w"];
 
             IQueryable<Game> gameQuery = context.Game.Where(x => x.Id.Equals(eventRequest.GameId)).AsQueryable().AsNoTracking();
             Game game = await context.GetFirstOrDefaultAsync(gameQuery);
@@ -230,27 +231,28 @@ namespace FiguraSp.Games.Service.Services
             (int, int)[] _15 = [(4, 3), (8, 4)];
             (int, int)[] _16 = [];
 
-            List<(int, int)[]> season13Heats = [_1, _2, _3, _4, _5, _6, _7, _9, _10, _11, _12, _13, _14, _15, _16];
+            List<(int, int)[]> season13Heats = [_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16];
 
             List<Event> events = [];
             for (int i = 0; i < individualResults.Count; i++)
             {
+                Event riderEvent = new()
+                {
+                    GameId = eventRequest.GameId,
+                    RiderId = eventRequest.RiderId,
+                    RiderGameNumber = eventRequest.GameRiderNr,
+                    RiderHeatNumber = 99,
+                    RiderRowNumber = 0,
+                    EventResult = individualResults[i],
+                    HomeAway = eventRequest.HomeAway,
+                };
                 if (i < season13Heats[eventRequest.GameRiderNr - 1].Length)
                 {
-                    Event riderEvent = new()
-                    {
-                        GameId = eventRequest.GameId,
-                        RiderId = eventRequest.RiderId,
-                        RiderGameNumber = eventRequest.GameRiderNr,
-                        RiderHeatNumber = season13Heats[eventRequest.GameRiderNr - 1][i].Item1,
-                        RiderRowNumber = season13Heats[eventRequest.GameRiderNr - 1][i].Item2,
-                        EventResult = individualResults[i],
-                        HomeAway = eventRequest.HomeAway,
-                    };
-                    events.Add(riderEvent);
+                    riderEvent.RiderHeatNumber = season13Heats[eventRequest.GameRiderNr - 1][i].Item1;
+                    riderEvent.RiderRowNumber = season13Heats[eventRequest.GameRiderNr - 1][i].Item2;
                 }
+                events.Add(riderEvent);
             }
-
             
             try
             {
@@ -336,6 +338,25 @@ namespace FiguraSp.Games.Service.Services
 
             return new DefaultResponse() { Success = true };
         }
+
+        public async Task<List<EventWithRiderResponseDto>> GameEventsWithRider(Guid gameId)
+        {
+            var ridersHome = await GameEvents(gameId, "Home");
+            var ridersAway = await GameEvents(gameId, "Away");
+            var ridersId = ridersHome.Select(x => x.RiderId).Concat(ridersAway.Select(x => x.RiderId)).Distinct().ToList();
+            var client = httpClientFactory.CreateClient("figuraHttp");
+            var payload = JsonConvert.SerializeObject(ridersId);
+            var content = new StringContent(payload, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync("api/rider/gameRiders", content);
+            var responseString = await response.Content.ReadAsStringAsync();
+            var gameRiderResponseDtos = JsonConvert.DeserializeObject<List<RiderResponseDto>>(responseString);
+            var gameEvents = ridersHome.Concat(ridersAway);
+            List<EventWithRiderResponseDto> result = [..gameEvents
+                .Select(x => new EventWithRiderResponseDto {EventResponseDto = x, RiderResponseDto = gameRiderResponseDtos!
+                .First(y => y.Id.Equals(x.RiderId))})
+                .OrderBy(x => x.EventResponseDto!.RiderHeatNumber).ThenBy(x => x.EventResponseDto!.RiderRowNumber)];
+            return result;
+        }
     }
 
     public interface IGameService
@@ -352,5 +373,6 @@ namespace FiguraSp.Games.Service.Services
         public Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway);
         public Task<GameRiderEventsResponseDto> GameRiderEvents(Guid gameId, string homeAway);
         public Task<DefaultResponse> DeleteGameRiderEvents(Guid gameId, Guid riderId);
+        public Task<List<EventWithRiderResponseDto>> GameEventsWithRider(Guid gameId); 
     }
 }

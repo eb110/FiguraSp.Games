@@ -350,12 +350,86 @@ namespace FiguraSp.Games.Service.Services
             var response = await client.PostAsync("api/rider/gameRiders", content);
             var responseString = await response.Content.ReadAsStringAsync();
             var gameRiderResponseDtos = JsonConvert.DeserializeObject<List<RiderResponseDto>>(responseString);
-            var gameEvents = ridersHome.Concat(ridersAway);
+            var gameEvents = ridersHome.Concat(ridersAway).Where(x => !x.EventResult!.Equals("zm"));
             List<EventWithRiderResponseDto> result = [..gameEvents
                 .Select(x => new EventWithRiderResponseDto {EventResponseDto = x, RiderResponseDto = gameRiderResponseDtos!
                 .First(y => y.Id.Equals(x.RiderId))})
                 .OrderBy(x => x.EventResponseDto!.RiderHeatNumber).ThenBy(x => x.EventResponseDto!.RiderRowNumber)];
+            result = AttachGameEventChanges(result);
             return result;
+        }
+
+        public List<EventWithRiderResponseDto> AttachGameEventChanges(List<EventWithRiderResponseDto> list)
+        {
+            for(int i = 0; i < list.Count; i++)
+            {
+                int heatNr = (int)list[i].EventResponseDto!.RiderHeatNumber!;
+                List<Guid> ridersToSkip = [..list.Where(x => x.EventResponseDto!.RiderHeatNumber == heatNr).Select(x => (Guid)x.RiderResponseDto!.Id!)];
+                string side = list[i].EventResponseDto!.HomeAway!;
+                var changes = list
+                       .Where(x => !ridersToSkip.Contains((Guid)x.RiderResponseDto!.Id!) && x.EventResponseDto!.HomeAway!.Equals(side) && x.EventResponseDto!.RiderHeatNumber > heatNr && !x.EventResponseDto!.EventResult!.Equals("-"))
+                       .GroupBy(x => x.RiderResponseDto!.Id).Select(x => x.OrderBy(y => y.EventResponseDto!.RiderHeatNumber).FirstOrDefault())
+                       .Select(x => (x!.RiderResponseDto, x.EventResponseDto)).ToList()!;
+                list[i].EventChanges = changes.Select(x => x.EventResponseDto).ToList()!;
+                list[i].RiderChanges = changes.Select(x => x.RiderResponseDto).ToList()!;
+            }
+            return list;
+        }
+
+        public async Task<DefaultResponse> ChangeEvents(Guid oldEventId, Guid newEventId)
+        {
+            IQueryable<Event> oldEventQuery = context.Events.Where(x => x.Id.Equals(oldEventId));
+            var oldEvent = await context.GetFirstOrDefaultAsync(oldEventQuery);
+            IQueryable<Event> newEventQuery = context.Events.Where(x => x.Id.Equals(newEventId));
+            var newEvent = await context.GetFirstOrDefaultAsync(newEventQuery);
+            oldEventQuery = context.Events.Where(x => x.GameId.Equals(oldEvent.GameId) && x.RiderId.Equals(oldEvent.RiderId));
+            var oldEvents = await context.GetEntitiesToListAsync(oldEventQuery);
+            newEventQuery = context.Events.Where(x => x.GameId.Equals(newEvent.GameId) && x.RiderId.Equals(newEvent.RiderId));
+            var newEvents = await context.GetEntitiesToListAsync(newEventQuery);
+
+            List<Event> allEventsToUpdate = [];
+
+            if(oldEvent.EventResult != "-")
+            {
+                var oldResult = oldEvent.EventResult;
+                var nextOldResults = oldEvents.Where(x => x.RiderHeatNumber > oldEvent.RiderHeatNumber).OrderBy(x => x.RiderHeatNumber).ToList();
+                for(int i = 0; i < nextOldResults.Count; i++)
+                {
+                    var tempResult = nextOldResults[i].EventResult;
+                    nextOldResults[i].EventResult = oldResult;
+                    oldResult = tempResult;
+                }
+                allEventsToUpdate.AddRange(nextOldResults);
+            }
+
+            oldEvent.EventResult = "zm";
+            allEventsToUpdate.Add(oldEvent);
+
+            var nextResults = newEvents.Where(x => x.RiderHeatNumber > newEvent.RiderHeatNumber).OrderBy(x => x.RiderHeatNumber).ToList();
+            var oldHeatNr = newEvent.RiderHeatNumber;
+            var oldRowNr = newEvent.RiderRowNumber;
+            for(int i = 0; i < nextResults.Count; i++)
+            {
+                var tempHeat = nextResults[i].RiderHeatNumber;
+                var tempRow = nextResults[i].RiderRowNumber;
+                nextResults[i].RiderHeatNumber = oldHeatNr;
+                nextResults[i].RiderRowNumber = oldRowNr;
+                oldHeatNr = tempHeat;
+                oldRowNr = tempRow;
+            }
+
+            newEvent.RiderHeatNumber = oldEvent.RiderHeatNumber;
+            newEvent.RiderRowNumber = oldEvent.RiderRowNumber;
+
+            allEventsToUpdate.AddRange(nextResults);
+            allEventsToUpdate.Add(newEvent);
+
+            context.UpdateRange(allEventsToUpdate);
+            await context.SaveChangesAsync();
+
+            DefaultResponse response = new() { Success = true };
+
+            return response;
         }
     }
 
@@ -373,6 +447,7 @@ namespace FiguraSp.Games.Service.Services
         public Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway);
         public Task<GameRiderEventsResponseDto> GameRiderEvents(Guid gameId, string homeAway);
         public Task<DefaultResponse> DeleteGameRiderEvents(Guid gameId, Guid riderId);
-        public Task<List<EventWithRiderResponseDto>> GameEventsWithRider(Guid gameId); 
+        public Task<List<EventWithRiderResponseDto>> GameEventsWithRider(Guid gameId);
+        public Task<DefaultResponse> ChangeEvents(Guid oldEventId, Guid newEventId);
     }
 }

@@ -75,6 +75,19 @@ namespace FiguraSp.Games.Api.Controllers
             return Ok(response);
         }
 
+        [HttpPost]
+        [Route("ChangeEvents")]
+        public async Task<ActionResult<DefaultResponse>> ChangeEvents([FromQuery] Guid oldEventId, Guid newEventId)
+        {
+            var response = await gameService.ChangeEvents(oldEventId, newEventId);
+
+            if (!response.Success)
+            {
+                return BadRequest();
+            }
+            return Ok(response);
+        }
+
         [HttpDelete]
         [Route("RemoveGameRiderEvents")]
         public async Task<ActionResult> RemoveGameRiderEvents(Guid gameId, Guid riderId)

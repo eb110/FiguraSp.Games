@@ -88,6 +88,19 @@ namespace FiguraSp.Games.Api.Controllers
             return Ok(response);
         }
 
+        [HttpPost]
+        [Route("CalculateBonuses")]
+        public async Task<ActionResult<DefaultResponse>> CalculateBonuses(Guid gameId)
+        {
+            var response = await gameService.CalculateBonuses(gameId);
+
+            if (!response.Success)
+            {
+                return BadRequest();
+            }
+            return Ok(response);
+        }
+
         [HttpDelete]
         [Route("RemoveGameRiderEvents")]
         public async Task<ActionResult> RemoveGameRiderEvents(Guid gameId, Guid riderId)

@@ -267,6 +267,8 @@ namespace FiguraSp.Games.Service.Services
             return new DefaultResponse() { Success = true };
         }
 
+
+
         public async Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway)
         {
             var game = await GetGameById(gameId);
@@ -431,6 +433,33 @@ namespace FiguraSp.Games.Service.Services
 
             return response;
         }
+
+        public async Task<DefaultResponse> CalculateBonuses(Guid gameId)
+        {
+            IQueryable<Event> query = context.Events.Where(x => x.GameId.Equals(gameId) && !x.EventResult.Equals("zm")).OrderBy(x => x.RiderHeatNumber).AsQueryable().AsNoTracking();
+            var events = await context.GetEntitiesToListAsync(query);
+            List<Event> eventsToUpdate = [];
+            for(int i = 0; i < 13; i++)
+            {
+                var heat = events.Where(x => x.RiderHeatNumber == i + 1 && "0123".Contains(x.EventResult)).OrderByDescending(x => x.EventResult).ToList();
+                if (heat.Count > 2 && heat[0].EventResult.Equals("3") && heat[1].EventResult.Equals("2") && heat[0].HomeAway.Equals(heat[1].HomeAway) && heat[2].EventResult.Equals("1"))
+                {
+                    heat[1].EventResult = "2*";
+                    eventsToUpdate.Add(heat[1]);
+                }
+                else if (heat.Count == 4 && heat[1].EventResult.Equals("2") && heat[2].EventResult.Equals("1") && heat[1].HomeAway.Equals(heat[2].HomeAway) && heat[3].EventResult.Equals("0"))
+                {
+                    heat[2].EventResult = "1*";
+                    eventsToUpdate.Add(heat[2]);
+                }
+            }
+            if (eventsToUpdate.Count > 0)
+            {
+                context.Events.UpdateRange(eventsToUpdate);
+                await context.SaveChangesAsync();
+            }
+            return new() { Success = true };
+        }
     }
 
     public interface IGameService
@@ -449,5 +478,6 @@ namespace FiguraSp.Games.Service.Services
         public Task<DefaultResponse> DeleteGameRiderEvents(Guid gameId, Guid riderId);
         public Task<List<EventWithRiderResponseDto>> GameEventsWithRider(Guid gameId);
         public Task<DefaultResponse> ChangeEvents(Guid oldEventId, Guid newEventId);
+        public Task<DefaultResponse> CalculateBonuses(Guid gameId);
     }
 }

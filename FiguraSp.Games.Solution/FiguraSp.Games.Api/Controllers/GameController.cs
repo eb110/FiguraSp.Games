@@ -45,6 +45,11 @@ namespace FiguraSp.Games.Api.Controllers
         {
             var response = await gameService.AddRiderEvents(riderEventsRequest);
 
+            if (!response.Success) 
+            {
+                return BadRequest(response);
+            }
+
             return response;
         }
 

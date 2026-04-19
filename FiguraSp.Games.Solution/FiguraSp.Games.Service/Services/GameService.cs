@@ -174,7 +174,7 @@ namespace FiguraSp.Games.Service.Services
 
         public async Task<DefaultResponse> AddRiderEvents(RiderEventsRequestDto eventRequest)
         {
-            List<string> allowedIndividualResults = ["0", "1", "2", "3", "-", "u", "w"];
+            List<string> allowedIndividualResults = ["0", "1", "2", "3", "-", "u", "w", "d"];
 
             IQueryable<Game> gameQuery = context.Game.Where(x => x.Id.Equals(eventRequest.GameId)).AsQueryable().AsNoTracking();
             Game game = await context.GetFirstOrDefaultAsync(gameQuery);
@@ -206,7 +206,7 @@ namespace FiguraSp.Games.Service.Services
                 individualResults = [..eventRequest.GameRiderResult.Split(',')];
                 if (individualResults.Any(x => !allowedIndividualResults.Contains(x)))
                 {
-                    return new DefaultResponse() { Errors = ["Bad result"] };
+                    return new DefaultResponse() { Errors = [$"Inserted result is not correct - check it's structure: {eventRequest.GameRiderResult}"] };
                 }
             }
             catch (Exception ex)

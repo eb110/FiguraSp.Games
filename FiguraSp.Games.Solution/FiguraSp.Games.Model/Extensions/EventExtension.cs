@@ -17,6 +17,8 @@ namespace FiguraSp.Games.Model.Extensions
                 RiderRowNumber = gameEvent.RiderRowNumber,
                 EventResult = gameEvent.EventResult,
                 HomeAway = gameEvent.HomeAway,
+                ChangedFromRiderId = gameEvent.ChangedFromRiderId,
+                ChangedToRiderId = gameEvent.ChangedToRiderId,
                 Success = true
             };
 

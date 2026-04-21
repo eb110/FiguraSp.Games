@@ -10,6 +10,8 @@ namespace FiguraSp.Games.Model.Entity
         [ForeignKey("Game")]
         public required Guid GameId { get; set; }
         public Game Game { get; set; } = null!;
+        public Guid? ChangedToRiderId { get; set; }
+        public Guid? ChangedFromRiderId { get; set; }
         public required Guid RiderId { get; set; }
         public required int RiderGameNumber { get; set; } = 0;
         public required int RiderHeatNumber { get; set; } = 0;

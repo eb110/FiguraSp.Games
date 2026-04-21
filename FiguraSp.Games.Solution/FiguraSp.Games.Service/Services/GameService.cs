@@ -241,7 +241,7 @@ namespace FiguraSp.Games.Service.Services
                     GameId = eventRequest.GameId,
                     RiderId = eventRequest.RiderId,
                     RiderGameNumber = eventRequest.GameRiderNr,
-                    RiderHeatNumber = 99,
+                    RiderHeatNumber = 99 + i,
                     RiderRowNumber = 0,
                     EventResult = individualResults[i],
                     HomeAway = eventRequest.HomeAway,
@@ -407,6 +407,7 @@ namespace FiguraSp.Games.Service.Services
             }
 
             oldEvent.EventResult = "zm";
+            oldEvent.ChangedToRiderId = newEvent.RiderId;
             oldEvent.Status = "ChangeUpdate";
             allEventsToUpdate.Add(oldEvent);
 
@@ -427,6 +428,7 @@ namespace FiguraSp.Games.Service.Services
             newEvent.RiderHeatNumber = oldEvent.RiderHeatNumber;
             newEvent.RiderRowNumber = oldEvent.RiderRowNumber;
             newEvent.Status = "ChangeUpdate";
+            newEvent.ChangedFromRiderId = oldEvent.RiderId;
 
             allEventsToUpdate.AddRange(nextResults);
             allEventsToUpdate.Add(newEvent);

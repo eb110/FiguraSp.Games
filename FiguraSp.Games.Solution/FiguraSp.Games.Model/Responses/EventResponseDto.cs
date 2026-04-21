@@ -7,6 +7,8 @@ namespace FiguraSp.Games.Model.Responses
         public Guid? Id { get; set; }
         public Guid? GameId { get; set; }
         public Guid? RiderId { get; set; }
+        public Guid? ChangedToRiderId { get; set; }
+        public Guid? ChangedFromRiderId { get; set; }
         public int? RiderGameNumber { get; set; }
         public int? RiderHeatNumber { get; set; }
         public int? RiderRowNumber { get; set; }

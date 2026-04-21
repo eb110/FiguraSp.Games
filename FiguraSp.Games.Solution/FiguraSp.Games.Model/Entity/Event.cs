@@ -16,5 +16,6 @@ namespace FiguraSp.Games.Model.Entity
         public required int RiderRowNumber { get; set; }
         public required string EventResult { get; set; }
         public required string HomeAway { get; set; }
+        public required string Status { get; set; }
     }
 }

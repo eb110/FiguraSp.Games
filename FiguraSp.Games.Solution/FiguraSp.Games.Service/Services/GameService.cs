@@ -245,6 +245,7 @@ namespace FiguraSp.Games.Service.Services
                     RiderRowNumber = 0,
                     EventResult = individualResults[i],
                     HomeAway = eventRequest.HomeAway,
+                    Status = "Default"
                 };
                 if (i < season13Heats[eventRequest.GameRiderNr - 1].Length)
                 {
@@ -400,11 +401,13 @@ namespace FiguraSp.Games.Service.Services
                     var tempResult = nextOldResults[i].EventResult;
                     nextOldResults[i].EventResult = oldResult;
                     oldResult = tempResult;
+                    nextOldResults[i].Status = "ChangeUpdate";
                 }
                 allEventsToUpdate.AddRange(nextOldResults);
             }
 
             oldEvent.EventResult = "zm";
+            oldEvent.Status = "ChangeUpdate";
             allEventsToUpdate.Add(oldEvent);
 
             var nextResults = newEvents.Where(x => x.RiderHeatNumber > newEvent.RiderHeatNumber).OrderBy(x => x.RiderHeatNumber).ToList();
@@ -418,15 +421,17 @@ namespace FiguraSp.Games.Service.Services
                 nextResults[i].RiderRowNumber = oldRowNr;
                 oldHeatNr = tempHeat;
                 oldRowNr = tempRow;
+                nextResults[i].Status = "ChangeUpdate";
             }
 
             newEvent.RiderHeatNumber = oldEvent.RiderHeatNumber;
             newEvent.RiderRowNumber = oldEvent.RiderRowNumber;
+            newEvent.Status = "ChangeUpdate";
 
             allEventsToUpdate.AddRange(nextResults);
             allEventsToUpdate.Add(newEvent);
 
-            context.UpdateRange(allEventsToUpdate);
+            context.Events.UpdateRange(allEventsToUpdate);
             await context.SaveChangesAsync();
 
             DefaultResponse response = new() { Success = true };
@@ -445,11 +450,13 @@ namespace FiguraSp.Games.Service.Services
                 if (heat.Count > 2 && heat[0].EventResult.Equals("3") && heat[1].EventResult.Equals("2") && heat[0].HomeAway.Equals(heat[1].HomeAway) && heat[2].EventResult.Equals("1"))
                 {
                     heat[1].EventResult = "2*";
+                    heat[1].Status = "BonusUpdate";
                     eventsToUpdate.Add(heat[1]);
                 }
                 else if (heat.Count == 4 && heat[1].EventResult.Equals("2") && heat[2].EventResult.Equals("1") && heat[1].HomeAway.Equals(heat[2].HomeAway) && heat[3].EventResult.Equals("0"))
                 {
                     heat[2].EventResult = "1*";
+                    heat[2].Status = "BonusUpdate";
                     eventsToUpdate.Add(heat[2]);
                 }
             }
@@ -457,6 +464,29 @@ namespace FiguraSp.Games.Service.Services
             {
                 context.Events.UpdateRange(eventsToUpdate);
                 await context.SaveChangesAsync();
+            }
+            return new() { Success = true };
+        }
+
+        public async Task<DefaultResponse> ResetEventsToDefault(Guid gameId)
+        {
+            IQueryable<Event> eventQuery = context.Events.Where(e => e.GameId.Equals(gameId) && !e.Status.Equals("Default")).AsQueryable().AsNoTracking();
+            var events = await context.GetEntitiesToListAsync(eventQuery);
+            var eventIds = events.Select(x => x.Id).ToList();
+            IQueryable<Event> eventHistoryQuery = context.Events.TemporalAll().Where(e => e.GameId.Equals(gameId) && e.Status.Equals("Default") && eventIds.Contains(e.Id)).AsQueryable().AsNoTracking();
+            try
+            {
+                var historicalEvents = await context.GetEntitiesToListAsync(eventHistoryQuery);
+                foreach(var historicalEvent in historicalEvents)
+                {
+                    historicalEvent.Status = "Reset";
+                }
+                context.Events.UpdateRange(historicalEvents);
+                await context.SaveChangesAsync();
+            }
+            catch(Exception ex)
+            {
+                return new DefaultResponse { Errors = [ex.Message] };
             }
             return new() { Success = true };
         }
@@ -479,5 +509,6 @@ namespace FiguraSp.Games.Service.Services
         public Task<List<EventWithRiderResponseDto>> GameEventsWithRider(Guid gameId);
         public Task<DefaultResponse> ChangeEvents(Guid oldEventId, Guid newEventId);
         public Task<DefaultResponse> CalculateBonuses(Guid gameId);
+        public Task<DefaultResponse> ResetEventsToDefault(Guid gameId);
     }
 }

@@ -32,9 +32,20 @@ namespace FiguraSp.Games.Model.Data
 
             modelBuilder.Entity<Event>(entity =>
             {
+                entity.ToTable(tb => tb.IsTemporal(ttb =>
+                {
+                    ttb.UseHistoryTable("EventsHistory", "dbo");
+                    ttb
+                        .HasPeriodStart("PeriodStart")
+                        .HasColumnName("PeriodStart");
+                    ttb
+                        .HasPeriodEnd("PeriodEnd")
+                        .HasColumnName("PeriodEnd");
+                }));
+
                 entity.HasIndex(e => e.GameId, "IX_Events_GameId");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
                 entity.Property(e => e.HomeAway).HasDefaultValue("");
 
                 entity.HasOne(d => d.Game).WithMany(p => p.Events).HasForeignKey(d => d.GameId);

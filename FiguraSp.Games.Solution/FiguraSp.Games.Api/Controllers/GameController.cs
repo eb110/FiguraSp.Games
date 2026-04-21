@@ -94,6 +94,19 @@ namespace FiguraSp.Games.Api.Controllers
         }
 
         [HttpPost]
+        [Route("ResetEventsToDefault")]
+        public async Task<ActionResult<DefaultResponse>> ResetEvents([FromQuery] Guid gameId)
+        {
+            var response = await gameService.ResetEventsToDefault(gameId);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpPost]
         [Route("CalculateBonuses")]
         public async Task<ActionResult<DefaultResponse>> CalculateBonuses(Guid gameId)
         {

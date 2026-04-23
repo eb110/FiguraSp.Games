@@ -14,8 +14,11 @@ namespace FiguraSp.Games.Model.Extensions
                 TeamAwayId = game.TeamAwayId,
                 SeasonId = game.SeasonId,
                 LevelId = game.LevelId,
+                StageId = game.StageId,
                 Inserted = game.Inserted,
                 GameDate = game.GameDate,
+                HomeScore = game.HomeScore,
+                AwayScore = game.AwayScore,
                 Success = true
             };
 

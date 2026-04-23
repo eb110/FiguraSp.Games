@@ -92,6 +92,8 @@ namespace FiguraSp.Games.Service.Services
                                 TeamAwayId = gamesRequest.TeamIds[j],
                                 SeasonId = gamesRequest.SeasonId,
                                 LevelId = gamesRequest.GameLevelId,
+                                HomeScore = 0,
+                                AwayScore = 0,
                                 GameDate = DateOnly.Parse($"{validateSeason.Year}-01-01"),
                                 Inserted = false
                             });
@@ -492,12 +494,43 @@ namespace FiguraSp.Games.Service.Services
             }
             return new() { Success = true };
         }
+
+        public async Task<List<PicklistGameStageResponseDto>> GetStages()
+        {
+            IQueryable<PicklistGameStage> query = context.PicklistGameStage.OrderBy(x => x.GameStage).AsQueryable().AsNoTracking();
+            var picklist = await context.GetEntitiesToListAsync(query);
+            List<PicklistGameStageResponseDto> result = [.. picklist.Select(x => x.ToPicklistResponseDto())];
+            return result;
+        }
+
+        public async Task<DefaultResponse> EditGame(GameEditRequestDto gameEditRequest)
+        {
+            IQueryable<Game> query = context.Game.Where(x => x.Id.Equals(gameEditRequest.Id)).AsQueryable();
+            var game = await context.GetFirstOrDefaultAsync(query);
+            game.GameDate = gameEditRequest.GameDate;
+            game.StageId = gameEditRequest.StageId;
+            game.HomeScore = gameEditRequest.HomeScore;
+            game.AwayScore = gameEditRequest.AwayScore;
+
+            try
+            {
+                context.Game.Update(game);
+                await context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse() { Errors = [ex.Message] };
+            }
+
+            return new() { Success = true };
+        }
     }
 
     public interface IGameService
     {
         public Task<List<SeasonResponseDto>> GetSeasons();
         public Task<List<PicklistGameLevelResponseDto>> GetLevels();
+        public Task<List<PicklistGameStageResponseDto>> GetStages();
         public Task<SeasonResponseDto> AddSeason(string year);
         public Task<SeasonResponseDto> GetSeasonByYear(string year);
         public Task<SeasonResponseDto> GetSeasonById(Guid id);
@@ -512,5 +545,6 @@ namespace FiguraSp.Games.Service.Services
         public Task<DefaultResponse> ChangeEvents(Guid oldEventId, Guid newEventId);
         public Task<DefaultResponse> CalculateBonuses(Guid gameId);
         public Task<DefaultResponse> ResetEventsToDefault(Guid gameId);
+        public Task<DefaultResponse> EditGame(GameEditRequestDto gameEditRequest);
     }
 }

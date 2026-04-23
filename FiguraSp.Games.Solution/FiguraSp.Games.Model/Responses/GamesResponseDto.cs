@@ -9,7 +9,10 @@ namespace FiguraSp.Games.Model.Responses
         public Guid? TeamAwayId { get; set; }
         public Guid? SeasonId { get; set; }
         public Guid? LevelId { get; set; }
+        public Guid? StageId { get; set; }
         public bool? Inserted { get; set; }
         public DateOnly? GameDate { get; set; }
+        public decimal? HomeScore { get; set; }
+        public decimal? AwayScore { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FiguraSp.Games.Model.Entity
@@ -15,8 +16,17 @@ namespace FiguraSp.Games.Model.Entity
         [ForeignKey("Level")]
         public required Guid LevelId { get; set; }
         public PicklistGameLevel Level { get; set; } = null!;
+        [ForeignKey("Stage")]
+        public Guid? StageId { get; set; }
+        public PicklistGameStage Stage { get; set; } = null!;
         public required bool Inserted { get; set; } = false; 
         public required DateOnly GameDate { get; set; }
         public List<Event> Events { get; set; } = [];
+        [Precision(3, 1)]
+        [Range(0, 90)]
+        public required decimal HomeScore { get; set; } = 0;
+        [Precision(3, 1)]
+        [Range(0, 90)]
+        public required decimal AwayScore { get; set; } = 0;
     }
 }

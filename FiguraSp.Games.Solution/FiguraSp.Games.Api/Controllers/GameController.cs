@@ -27,6 +27,14 @@ namespace FiguraSp.Games.Api.Controllers
         }
 
         [HttpGet]
+        [Route("Stages")]
+        public async Task<ActionResult<List<PicklistGameStageResponseDto>>> GetStages()
+        {
+            var response = await gameService.GetStages();
+            return Ok(response);
+        }
+
+        [HttpGet]
         [Route("Season")]
         public async Task<ActionResult<SeasonResponseDto>> GetSeasonById(Guid id)
         {
@@ -46,6 +54,20 @@ namespace FiguraSp.Games.Api.Controllers
             var response = await gameService.AddRiderEvents(riderEventsRequest);
 
             if (!response.Success) 
+            {
+                return BadRequest(response);
+            }
+
+            return response;
+        }
+
+        [HttpPost]
+        [Route("EditGame")]
+        public async Task<ActionResult<DefaultResponse>> EditGame([FromBody] GameEditRequestDto gameEditRequest)
+        {
+            var response = await gameService.EditGame(gameEditRequest);
+
+            if (!response.Success)
             {
                 return BadRequest(response);
             }

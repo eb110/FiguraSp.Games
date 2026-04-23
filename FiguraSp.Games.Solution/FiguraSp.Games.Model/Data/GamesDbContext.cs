@@ -9,6 +9,7 @@ namespace FiguraSp.Games.Model.Data
         public virtual DbSet<Season> Seasons { get; set; }
         public virtual DbSet<Game> Game { get; set; }
         public virtual DbSet<PicklistGameLevel> PicklistGameLevel { get; set; }
+        public virtual DbSet<PicklistGameStage> PicklistGameStage { get; set; }
         public virtual DbSet<Event> Events { get; set; }
         public virtual DbSet<VRiderEvent> V_Rider_Events { get; set; }
 

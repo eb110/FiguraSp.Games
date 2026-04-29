@@ -4,6 +4,7 @@ using FiguraSp.Games.Model.Extensions;
 using FiguraSp.Games.Model.Requests;
 using FiguraSp.Games.Model.Responses;
 using FiguraSp.Games.Model.Views;
+using FiguraSp.Games.Service.Validators;
 using FiguraSp.Riders.Model.DTOs.Responses;
 using FiguraSp.SharedLibrary.Responses;
 using Microsoft.EntityFrameworkCore;
@@ -271,7 +272,6 @@ namespace FiguraSp.Games.Service.Services
         }
 
 
-
         public async Task<List<EventResponseDto>> GameEvents(Guid gameId, string homeAway)
         {
             var game = await GetGameById(gameId);
@@ -524,10 +524,42 @@ namespace FiguraSp.Games.Service.Services
 
             return new() { Success = true };
         }
+
+        public async Task<DefaultResponse> SaveGame(Guid id)
+        {
+            IQueryable<Game> query = context.Game.Where(x => x.Id.Equals(id))
+                .Include(x => x.Events)
+                .AsQueryable()
+                .AsNoTracking();
+
+            Game game = await context.GetFirstOrDefaultAsync(query);
+
+            var checkScore = GameValidator.ValidateGameScore(game);
+
+            if (!checkScore.Success)
+            {
+                return checkScore;
+            }
+
+            game.Inserted = true;
+            try
+            {
+                context.Game.Update(game);
+                await context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse() { Errors = [ex.Message] };
+            }
+
+            return new() { Success = true };
+
+        }
     }
 
     public interface IGameService
     {
+        public Task<DefaultResponse> SaveGame(Guid id);
         public Task<List<SeasonResponseDto>> GetSeasons();
         public Task<List<PicklistGameLevelResponseDto>> GetLevels();
         public Task<List<PicklistGameStageResponseDto>> GetStages();

@@ -75,6 +75,20 @@ namespace FiguraSp.Games.Api.Controllers
             return response;
         }
 
+        [HttpPost]
+        [Route("SaveGame")]
+        public async Task<ActionResult<DefaultResponse>> SaveGame(Guid id)
+        {
+            var response = await gameService.SaveGame(id);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
         [HttpGet]
         [Route("GameEvents")]
         public async Task<ActionResult<List<EventResponseDto>>> GameEvents(Guid gameId, string homeAway)

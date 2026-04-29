@@ -17,6 +17,8 @@ namespace FiguraSp.Games.Test
                 TeamHomeId = Guid.NewGuid(),
                 SeasonId = Guid.NewGuid(),
                 LevelId = Guid.NewGuid(),
+                HomeScore = 0,
+                AwayScore = 0,
                 Inserted = false,
                 GameDate = new DateOnly(2025, 1, 1)
                 }

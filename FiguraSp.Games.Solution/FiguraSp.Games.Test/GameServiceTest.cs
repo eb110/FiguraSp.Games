@@ -18,7 +18,7 @@ namespace FiguraSp.Games.Test
         private readonly Mock<IHttpClientFactory> mockHttpClientFactory;
         private readonly Mock<DbSet<Game>> mockGame;
 
-        private RiderEventsRequestDto riderEventsRequestDto;
+        private readonly RiderEventsRequestDto riderEventsRequestDto;
 
         #endregion
 
@@ -58,6 +58,8 @@ namespace FiguraSp.Games.Test
                 SeasonId = Guid.NewGuid(),
                 LevelId = Guid.NewGuid(),
                 Inserted = false,
+                HomeScore = 0,
+                AwayScore = 0,
                 GameDate = new DateOnly(2025, 1, 1)
             };
 
